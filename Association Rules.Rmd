@@ -1,0 +1,173 @@
+---
+title: "Association Rules"
+output: pdf_document
+---
+
+Composed by: Akihiro Hayashi
+
+#Introduction
+
+Processes:
+
+1. Support(X -> Y) = P(X, Y) >= minsup
+2. Confidence(X -> Y) = P(Y|X) = P(X, Y) / P(X) >= mincon
+3. Lift(X -> Y) = P(Y|X) / P(Y) = Confidence(X -> Y) / P(Y)
+
+Applications:
+
+1. Promotion (target = "rules")
+2. Sales Ranking (target = "frequent itemsets")
+2. Bundle (target = "frequent itemsets")
+
+#Tools
+
+arules or eclat
+
+```{r}
+install.packages("arules")
+library(arules)
+```
+
+##Methods
+
+1. apriori(data, parameter = NULL, appearance = NULL, control = NULL)
+
+parameter: support / confidence / maxlen / minlen / target = "rules" or "frequent itemsets"
+appearance: lhs / rhs
+control: 1 / -1
+
+2. eclat(data, parameter = NULL, control = NULL)
+
+target: cannot be "rules"
+maxlen: default = 5
+
+#Association Rules
+
+##Step 0. Data
+
+```{r}
+data("Groceries")
+summary(Groceries)
+inspect(Groceries[1:10])
+```
+
+##Step 1. Associate
+
+```{r}
+rules0 <- apriori(Groceries, parameter = list(support = .001, confidence = .5))
+
+rules0
+inspect(rules0[1:10])
+```
+
+We got too many rules.
+
+###Increase Support & Confidence
+
+```{r}
+rules1 <- apriori(Groceries, parameter = list(support = .005, confidence = .5))
+rules1
+
+rules2 <- apriori(Groceries, parameter = list(support = .005, confidence = .6))
+rules2
+
+rules3 <- apriori(Groceries, parameter = list(support = .005, confidence = .64))
+rules3
+
+inspect(rules3)
+```
+
+###Increase Support
+
+```{r}
+rules.sorted_sup <- sort(rules0, by = "support")
+inspect(rules.sorted_sup[1:5])
+```
+
+###Increase Confidence
+
+```{r}
+rules.sorted_con <- sort(rules0, by = "confidence")
+inspect(rules.sorted_con[1:5])
+```
+
+###Increase Lift
+
+```{r}
+rules.sorted_lift <- sort(rules0, by = "lift")
+inspect(rules.sorted_lift[1:5])
+```
+
+#Application
+
+##Promote ("mustard")
+
+```{r}
+rules4 <- apriori(Groceries, parameter = list(maxlen = 2, supp = .001, conf = .1), appearance = list(rhs = "mustard", default = "lhs"))
+inspect(rules4)
+```
+
+
+If our target is "frequent itemsets", we only need to set "supp". Check following applications.
+
+##Sales Ranking
+
+```{r}
+itemsets_apr <- apriori(Groceries, parameter = list(supp = .001, target = "frequent itemsets"), control = list(sort = -1))
+itemsets_apr
+inspect(itemsets_apr[1:5])
+```
+
+##Bundle
+
+```{r}
+itemsets_ecl <- eclat(Groceries, parameter = list(minlen = 1, maxlen = 3, supp = .001, target = "frequent itemsets"), control = list(sort = -1))
+itemsets_ecl
+inspect(itemsets_ecl[1:5])
+```
+
+#Visualization
+
+```{r}
+install.packages("arulesViz")
+library(arulesViz)
+```
+
+```{r}
+rules5 <- apriori(Groceries, parameter = list(supp = .002, conf = .5))
+rules5
+plot(rules5)
+plot(rules5, interactive = TRUE)
+```
+
+```{r}
+plot(rules5, interactive = TRUE)
+```
+
+```{r}
+plot(rules5, shading = "order", control = list(main = "Two key plot"))
+```
+
+```{r}
+plot(rules5, method = "grouped")
+```
+
+```{r}
+plot(rules5, method = "matrix")
+```
+
+```{r}
+plot(rules5, method = "matrix3D")
+```
+
+```{r}
+plot(rules5, method = "paracoord")
+```
+
+#Summary
+
+Package: arules, arules
+
+Dataset: Groceries
+
+Functions: apriori(), eclat(), inspect(), sort(), plot()
